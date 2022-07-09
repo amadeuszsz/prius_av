@@ -1,0 +1,17 @@
+repositories:
+  src/external/gazebo_ros_pkgs:
+    type: git
+    url: https://github.com/amadeuszsz/gazebo_ros_pkgs.git
+    version: noetic-devel-fix_spawn
+  src/external/ouster_example:
+    type: git
+    url: https://github.com/amadeuszsz/ouster_example.git
+    version: noetic-dev
+  src/external/car_demo:
+    type: git
+    url: https://github.com/amadeuszsz/car_demo.git
+    version: noetic-dev
+  src/external/yolov3-tf2:
+    type: git
+    url: https://github.com/amadeuszsz/yolov3-tf2.git
+    version: master

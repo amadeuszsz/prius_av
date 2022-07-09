@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""
+Copyright 2020 Amadeusz Szymko <amadeusz.szymko@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
+
+from cv_bridge import CvBridge, CvBridgeError
+from prius_msgs.msg import State, Control
+from sensor_msgs.msg import Image
+from std_msgs.msg import UInt8
+import tensorflow as tf
+import cv2
+import numpy as np
+import rospy
+import rospkg
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+physical_devices = tf.config.list_physical_devices("GPU")
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# gpus = tf.config.list_physical_devices('GPU')
+# if gpus:
+#     try:
+#         tf.config.set_logical_device_configuration(
+#             gpus[0],
+#             [tf.config.LogicalDeviceConfiguration(memory_limit=1024)])
+#         logical_gpus = tf.config.list_logical_devices('GPU')
+#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#     except RuntimeError as e:
+#         print(e)
+
+
+class Prediction:
+    def __init__(self):
+        self.model = self.load_model()
+        self.bridge = CvBridge()
+        self.image_sub = rospy.Subscriber("/prius/front_camera/image_raw", Image, self.image_callback)
+        self.control_sub = rospy.Subscriber("/prius", Control, self.control_callback)
+        self.sign_sub = rospy.Subscriber("/prius/sign/type", UInt8, self.sign_type_callback)
+        self.predictions_pub = rospy.Publisher("/prius/predictions", State, queue_size=1)
+        self.mode_driving = Control.STATE_DRIVING_MANUAL
+        #self.speed_limits = [20, 30, 50, 60, 70, 80, 100, 120]
+        self.detected_sign = 30
+
+    @staticmethod
+    def get_model_path():
+        """
+        Get path of model directory.
+
+        Returns:
+            string: path of model directory
+        """
+        rospack = rospkg.RosPack()
+        path = rospack.get_path("prius_vision") + "/models/steering/checkpoint/saved_model.pb"
+        return path
+
+    @staticmethod
+    def load_model():
+        rospack = rospkg.RosPack()
+        path = rospack.get_path("prius_vision") + "/models/steering/checkpoint"
+        return tf.saved_model.load(path)
+
+
+    def control_callback(self, msg):
+        """
+        Set driving mode.
+
+        Args:
+            msg (prius_msgs.msg._Control.Control): prius control msg
+        """
+        self.mode_driving = msg.mode_driving
+
+    def sign_type_callback(self, msg):
+        """
+        Set detected sign velocity.
+
+        Args:
+            msg (std_msgs.msg._UInt8.UInt8): speed limit (km/h)
+        """
+        self.detected_sign = msg.data
+
+    def image_callback(self, msg):
+        """
+        Preprocess image and predict control commands.
+
+        Args:
+            msg (sensor_msgs.msg._Image.Image): front camera image
+        """
+        if self.mode_driving == Control.STATE_DRIVING_AUTO:
+            try:
+                cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+                # Select Region of Interest
+                cv_image = cv_image[282:546 + 1, :]
+                # Gaussian blur
+                cv_image = cv2.GaussianBlur(cv_image, (3, 3), 0)
+                # Change to YUV image
+                cv_image = cv2.cvtColor(cv_image.astype(np.float32), cv2.COLOR_RGB2YUV)
+                # Decrease size for easier processing
+                cv_image = cv2.resize(cv_image, (200, 66))
+                # Normalize values
+                cv_image = cv_image / 255
+
+                # Predict control commands
+                predictions = self.model(tf.cast(cv_image[tf.newaxis, ...], tf.float32))
+
+                # Publish predictions
+                self.predictions_publisher(predictions[0], msg.header)
+
+            except CvBridgeError as e:
+                print(e)
+
+    def predictions_publisher(self, predictions, header):
+        """
+        Publish predicted values.
+
+        Args:
+            predictions (array_like): predicted steering angle and velocity
+            header (std_msgs.msg._Header.Header): image msg header
+        """
+        predictions_msg = State()
+        predictions_msg.header = header
+        predictions_msg.steer = predictions[0]
+        predictions_msg.velocity = self.detected_sign / 3.6
+        #predictions_msg.velocity = 15.
+        self.predictions_pub.publish(predictions_msg)
+
+
+if __name__ == '__main__':
+    rospy.init_node('prius_prediction_node')
+    p = Prediction()
+    rospy.spin()

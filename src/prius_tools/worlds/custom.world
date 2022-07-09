@@ -1,0 +1,819 @@
+<sdf version="1.6">
+  <world name="default">
+    <gui fullscreen="0">
+      <plugin name="keyboard" filename="libKeyboardGUIPlugin.so" />
+      <camera name="user_camera">
+        <pose>-20 0 3 0 0 0</pose>
+        <track_visual>
+          <name>prius</name>
+          <static>true</static>
+          <use_model_frame>true</use_model_frame>
+          <xyz>-10 0 3</xyz>
+          <inherit_yaw>true</inherit_yaw>
+        </track_visual>
+      </camera>
+    </gui>
+    <light name="sun" type="directional">
+      <cast_shadows>1</cast_shadows>
+      <pose frame="">0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>1</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>2000 2000</size>
+            </plane>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode />
+            </contact>
+            <bounce />
+            <friction>
+              <torsional>
+                <ode />
+              </torsional>
+              <ode />
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>2000 2000</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grass</name>
+            </script>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.95 0.95 0.95 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0 0 0 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <pose frame="">250 250 0 0 0 0</pose>
+    </model>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type="adiabatic" />
+    <physics name="default_physics" default="0" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <sky />
+      <shadows>1</shadows>
+    </scene>
+    <audio>
+      <device>default</device>
+    </audio>
+    <wind />
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <road name="road">
+      <width>8.4</width>
+      <material>
+        <script>
+          <uri>model://media/materials/scripts/</uri>
+          <uri>model://media/materials/textures/</uri>
+          <name>AV/Two_Lanes</name>
+        </script>
+      </material>
+      <point>199.99999999999997 -199.99999999999991 0.02</point>
+      <point>210.02866819734336 -200.1683317163929 0.02</point>
+      <point>220.10643131399576 -200.23538442057878 0.02</point>
+      <point>230.2215704046753 -200.21746297645956 0.02</point>
+      <point>240.36236652410014 -200.1308722479375 0.02</point>
+      <point>250.5171007269882 -199.99191709891468 0.02</point>
+      <point>260.6740540680576 -199.81690239329305 0.02</point>
+      <point>270.8215076020266 -199.6221329949749 0.02</point>
+      <point>280.947742383613 -199.42391376786205 0.02</point>
+      <point>291.04103946753503 -199.23854957585684 0.02</point>
+      <point>301.08967990851073 -199.08234528286124 0.02</point>
+      <point>311.0824207441924 -198.97187584775844 0.02</point>
+      <point>321.0422721525762 -198.94315306345612 0.02</point>
+      <point>331.0488987486251 -199.06433710041335 0.02</point>
+      <point>341.18728014210814 -199.40660410575123 0.02</point>
+      <point>351.54238542598483 -200.04113631807954 0.02</point>
+      <point>362.1108688549647 -201.0902692154481 0.02</point>
+      <point>372.58677752759934 -202.8516127441826 0.02</point>
+      <point>382.5993981179531 -205.6602870308417 0.02</point>
+      <point>391.77801730009026 -209.85141220198415 0.02</point>
+      <point>399.7519217480754 -215.76010838416883 0.02</point>
+      <point>406.16365793846103 -223.6097708472518 0.02</point>
+      <point>410.74644017377494 -232.85984306970215 0.02</point>
+      <point>413.2722652591789 -242.65097398663556 0.02</point>
+      <point>413.792240316125 -252.4037866994552 0.02</point>
+      <point>413.03790188032497 -262.22438619095846 0.02</point>
+      <point>411.84256661985177 -272.32141333547986 0.02</point>
+      <point>411.0395512027778 -282.90350900735416 0.02</point>
+      <point>411.458102538861 -293.9997978472424 0.02</point>
+      <point>413.8982199540807 -304.34929936493614 0.02</point>
+      <point>419.1471078883608 -312.1268406161302 0.02</point>
+      <point>427.54656738257654 -316.26474755574327 0.02</point>
+      <point>437.7676711520112 -318.5460087402472 0.02</point>
+      <point>448.0899908332448 -321.4213452102098 0.02</point>
+      <point>457.0090448593226 -326.70637894786495 0.02</point>
+      <point>463.6430894781011 -334.3852613776561 0.02</point>
+      <point>467.35294332383893 -344.01671903278753 0.02</point>
+      <point>468.1453741911352 -354.67983014323016 0.02</point>
+      <point>466.22593452236833 -365.3060657821238 0.02</point>
+      <point>461.8002315953009 -374.8268563046993 0.02</point>
+      <point>455.10798689186606 -382.31818240010006 0.02</point>
+      <point>446.5967572868002 -387.73667480219797 0.02</point>
+      <point>436.7923648649434 -391.37059332809775 0.02</point>
+      <point>426.22077420099686 -393.50880155974255 0.02</point>
+      <point>415.40429422353196 -394.41670988599907 0.02</point>
+      <point>404.81257760161236 -394.0219067684409 0.02</point>
+      <point>394.8757622511897 -391.99846949679693 0.02</point>
+      <point>386.02302684837446 -388.0143212538637 0.02</point>
+      <point>378.50536385511003 -381.92407388658097 0.02</point>
+      <point>371.85496541340916 -374.33543830816853 0.02</point>
+      <point>365.4227968799262 -366.045999753063 0.02</point>
+      <point>358.5856431900351 -357.8568303285644 0.02</point>
+      <point>351.05812027534864 -350.6146253543265 0.02</point>
+      <point>342.79213654403515 -345.19812589230736 0.02</point>
+      <point>333.7564479722435 -342.4086631932824 0.02</point>
+      <point>324.0511009630059 -342.18803498667165 0.02</point>
+      <point>313.85748357890265 -343.94551058589445 0.02</point>
+      <point>303.3581962365132 -347.08242225270124 0.02</point>
+      <point>292.75578633813024 -351.0217717191959 0.02</point>
+      <point>282.7220829458825 -355.69636631726075 0.02</point>
+      <point>274.4041058791886 -361.55523834506704 0.02</point>
+      <point>268.9700034962073 -369.0703733607861 0.02</point>
+      <point>267.0035393642155 -378.4495918027808 0.02</point>
+      <point>266.80833198062436 -388.8699980384973 0.02</point>
+      <point>266.13196150418923 -399.2573450370552 0.02</point>
+      <point>263.0703228728533 -408.67652292344326 0.02</point>
+      <point>257.46267537038096 -416.8888228116845 0.02</point>
+      <point>249.69258543841508 -423.87296371261124 0.02</point>
+      <point>240.1438010835008 -429.6077371646247 0.02</point>
+      <point>229.20007031218353 -434.07193470612657 0.02</point>
+      <point>217.24514113100804 -437.24434787551763 0.02</point>
+      <point>204.66276154651965 -439.1037682111994 0.02</point>
+      <point>191.83667956526352 -439.6289872515731 0.02</point>
+      <point>179.15064319378482 -438.79879653503997 0.02</point>
+      <point>166.98840043862873 -436.59198760000146 0.02</point>
+      <point>155.73369930634038 -432.9873519848586 0.02</point>
+      <point>145.770287803465 -427.96368122801283 0.02</point>
+      <point>137.48182245029378 -421.49981950164204 0.02</point>
+      <point>130.92637951032918 -413.76192347385455 0.02</point>
+      <point>125.10550194930795 -405.52399345472145 0.02</point>
+      <point>118.93665175810837 -397.58474426341996 0.02</point>
+      <point>112.25813847948322 -390.0453355746306 0.02</point>
+      <point>105.30626866400435 -382.7054386573428 0.02</point>
+      <point>98.31893130968858 -375.36352605405386 0.02</point>
+      <point>91.53401541455267 -367.8180703072608 0.02</point>
+      <point>85.17737883457161 -359.885094131335 0.02</point>
+      <point>79.3755139517874 -351.5255675066492 0.02</point>
+      <point>74.2059329527257 -342.77190922922046 0.02</point>
+      <point>69.7458040298169 -333.65703988911616 0.02</point>
+      <point>66.0722953754913 -324.2138800764036 0.02</point>
+      <point>63.24167900262672 -314.481523544862 0.02</point>
+      <point>61.22086272418912 -304.5254640815724 0.02</point>
+      <point>59.95286990810741 -294.41825143276935 0.02</point>
+      <point>59.38072367503989 -284.2324354177357 0.02</point>
+      <point>59.44744714564497 -274.04056585575506 0.02</point>
+      <point>60.09612628926857 -263.915183125327 0.02</point>
+      <point>61.338024948472246 -253.91858630061407 0.02</point>
+      <point>63.382498364701846 -244.08331825766174 0.02</point>
+      <point>66.47467737459155 -234.43654785979106 0.02</point>
+      <point>70.85969281477557 -225.00544397032317 0.02</point>
+      <point>76.73798570372401 -215.87878224319434 0.02</point>
+      <point>83.96228715131166 -207.62467103973484 0.02</point>
+      <point>92.22239442280961 -201.0358298667427 0.02</point>
+      <point>101.20717147138713 -196.90626484093303 0.02</point>
+      <point>110.6104104169846 -195.9866777605864 0.02</point>
+      <point>120.24670170033177 -197.96630290618833 0.02</point>
+      <point>130.05572420913543 -201.4352092515347 0.02</point>
+      <point>139.98294335071364 -204.93261901553083 0.02</point>
+      <point>149.9738245323845 -206.99775441708226 0.02</point>
+      <point>159.98198612244917 -206.60936795094733 0.02</point>
+      <point>169.99391531409543 -204.51818718933833 0.02</point>
+      <point>180.00438125741198 -201.92142421591493 0.02</point>
+      <point>190.00815310263476 -200.0162911222709 0.02</point>
+      <point>199.99999999999974 -199.99999999999997 0.02</point>
+      <point>200.99999999999997 -199.99999999999991 0.03</point>
+    </road>
+    <include>
+      <name>speed_limit_sign_50_0</name>
+      <pose>230.21190016956598 -206.21745518366725 0 0 0 -4.710617237534065</pose>
+      <uri>model://speed_limit_sign_50</uri>
+    </include>
+    <include>
+      <name>speed_limit_sign_30_1</name>
+      <pose>270.93550783916794 -205.62104989271 0 0 0 -4.6931974182014615</pose>
+      <uri>model://speed_limit_sign_30</uri>
+    </include>
+    <include>
+      <name>speed_limit_sign_60_2</name>
+      <pose>458.49713701006567 -337.470577114614 0 0 0 0.7125278301835523</pose>
+      <uri>model://speed_limit_sign_60</uri>
+    </include>
+    <include>
+      <name>speed_limit_sign_50_3</name>
+      <pose>370.2281203521385 -362.45310867102256 0 0 0 -2.4816909449115383</pose>
+      <uri>model://speed_limit_sign_50</uri>
+    </include>
+    <include>
+      <name>speed_limit_sign_30_4</name>
+      <pose>82.00687027969141 -218.74912287195824 0 0 0 -3.713794350143281</pose>
+      <uri>model://speed_limit_sign_30</uri>
+    </include>
+    <include>
+      <name>speed_limit_sign_20_5</name>
+      <pose>138.37515919265678 -210.71319252523568 0 0 0 1.232069459077242</pose>
+      <uri>model://speed_limit_sign_20</uri>
+    </include>
+    <include>
+      <name>pine_tree_0</name>
+      <pose>210.32016346792452 -175.2945791362258 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_1</name>
+      <pose>220.2544360393035 -186.61504305086964 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_2</name>
+      <pose>230.20465323100552 -210.71388928244548 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_3</name>
+      <pose>240.49645890362032 -222.60481854447613 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_4</name>
+      <pose>250.242466188324 -176.9333287040979 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_5</name>
+      <pose>261.0555000685979 -223.29104097463738 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_6</name>
+      <pose>270.5456560884808 -185.1062833145571 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_7</name>
+      <pose>280.742989776138 -189.27745574211696 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_8</name>
+      <pose>290.6338777384535 -178.64915671212543 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_9</name>
+      <pose>300.82663868195243 -184.2964144672177 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_10</name>
+      <pose>310.8009879990126 -180.3844269660336 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_11</name>
+      <pose>321.09321766585725 -187.8992565444174 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_12</name>
+      <pose>330.5024289803679 -222.8940661936543 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_13</name>
+      <pose>341.9847969912072 -182.62010094817677 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_14</name>
+      <pose>349.6351335717028 -223.80904762676903 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_15</name>
+      <pose>360.4175298248782 -213.7701048445027 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_16</name>
+      <pose>368.4967829020167 -221.13903612717561 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_17</name>
+      <pose>386.7003982464529 -194.45735981429726 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_18</name>
+      <pose>379.196067585751 -231.17688077788614 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_19</name>
+      <pose>415.3083286110612 -199.45167188374228 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_20</name>
+      <pose>389.99389230267826 -234.0300376401467 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_21</name>
+      <pose>399.18769964523887 -237.16085924662488 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_22</name>
+      <pose>395.6906468455845 -245.35973176390158 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_23</name>
+      <pose>424.78748994735435 -252.53241695565947 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_24</name>
+      <pose>403.56521153351133 -261.3002626598607 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_25</name>
+      <pose>388.7632991015547 -270.0806201364356 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_26</name>
+      <pose>429.6410803826369 -283.2573260105967 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_27</name>
+      <pose>428.1739193425274 -291.73577901126833 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_28</name>
+      <pose>406.4167652419432 -307.62416338936384 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_29</name>
+      <pose>409.408015111451 -323.2885817319214 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_30</name>
+      <pose>435.02678177260447 -295.02849205428333 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_31</name>
+      <pose>443.77363660218026 -294.5885122694143 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_32</name>
+      <pose>451.8522183214041 -312.6040286869581 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_33</name>
+      <pose>469.59843632198056 -311.656110072219 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_34</name>
+      <pose>480.20019624137495 -324.45825517763114 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_35</name>
+      <pose>455.76503346367724 -346.619228778351 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_36</name>
+      <pose>444.92301698644127 -353.46504965584575 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_37</name>
+      <pose>479.8785492399904 -369.6330271102665 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_38</name>
+      <pose>473.7069605062864 -382.66398504647907 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_39</name>
+      <pose>470.0593684620091 -399.9150513812726 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_40</name>
+      <pose>436.97641870206274 -368.3646148562933 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_41</name>
+      <pose>429.9978315694123 -367.49542112664244 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_42</name>
+      <pose>423.6206039922766 -375.2760053772542 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_43</name>
+      <pose>415.1530992870033 -383.6107954957579 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_44</name>
+      <pose>404.1943565368433 -380.1558598398278 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_45</name>
+      <pose>392.77835688697024 -415.2714248232757 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_46</name>
+      <pose>389.3658548808388 -376.96957727433113 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_47</name>
+      <pose>364.8744289939379 -402.0321052464534 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_48</name>
+      <pose>355.1971091529838 -389.8367711331746 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_49</name>
+      <pose>372.19725527129805 -360.9808066852572 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_50</name>
+      <pose>349.4555882879618 -364.6707227380089 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_51</name>
+      <pose>332.41712224001174 -366.6925944157069 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_52</name>
+      <pose>335.11498830803885 -353.9443384787424 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_53</name>
+      <pose>343.46592983967975 -321.6654210427918 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_54</name>
+      <pose>322.6130259720504 -354.16899045095874 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_55</name>
+      <pose>316.316605646339 -354.42306820665743 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_56</name>
+      <pose>308.4842007196983 -362.39469464993493 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_57</name>
+      <pose>296.43835065780763 -359.83322226979817 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_58</name>
+      <pose>291.60412686961314 -371.03728367155304 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_59</name>
+      <pose>262.224471374367 -349.22356108316797 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_60</name>
+      <pose>284.73920251106097 -376.04374753619703 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_61</name>
+      <pose>245.6849377651252 -376.0367691477155 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_62</name>
+      <pose>291.444495201014 -389.9022906738101 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_63</name>
+      <pose>257.5903990744266 -397.61775999044426 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_64</name>
+      <pose>250.16177888634755 -402.3340995886389 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_65</name>
+      <pose>272.8125143641138 -430.32088193415314 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_66</name>
+      <pose>262.37922195568416 -441.037133142958 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_67</name>
+      <pose>230.03183431724744 -409.40566692798905 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_68</name>
+      <pose>234.0368859370894 -448.50529494552814 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_69</name>
+      <pose>221.36950535387746 -457.2762842534225 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_70</name>
+      <pose>206.62900568968817 -459.99938900623374 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_71</name>
+      <pose>191.97337718069838 -428.43477220352474 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_72</name>
+      <pose>178.9739935711864 -460.1461151679871 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_73</name>
+      <pose>164.79979064784644 -455.66246574158174 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_74</name>
+      <pose>153.72270996810929 -441.5211735774486 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_75</name>
+      <pose>142.05075383020758 -437.5721008914981 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_76</name>
+      <pose>124.96478066816547 -441.4851369509676 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_77</name>
+      <pose>142.7254494664909 -402.84204820752234 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_78</name>
+      <pose>108.03416937826258 -417.01428120745163 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_79</name>
+      <pose>105.05363441304749 -407.6727116914982 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_80</name>
+      <pose>123.91324757651614 -380.06273080810297 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_81</name>
+      <pose>122.009317527959 -366.92344719438955 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_82</name>
+      <pose>91.37918860296121 -382.15770241558937 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_83</name>
+      <pose>109.30606269252578 -350.89953144224864 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_84</name>
+      <pose>93.85689971599876 -352.42577882245234 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_85</name>
+      <pose>88.46019155499121 -344.7142201907446 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_86</name>
+      <pose>57.9693768767731 -353.2396391806863 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_87</name>
+      <pose>91.1141767739951 -322.06359199830916 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_88</name>
+      <pose>85.75026006074965 -315.5444746836348 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_89</name>
+      <pose>82.1227048688396 -308.131589971239 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_90</name>
+      <pose>70.60604746792464 -302.24885134082047 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_91</name>
+      <pose>41.655957795734594 -297.3549931170505 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_92</name>
+      <pose>79.5936626738289 -282.46047352534026 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_93</name>
+      <pose>72.25171650315238 -273.7566659925639 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_94</name>
+      <pose>72.87803825886846 -264.3520649781358 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_95</name>
+      <pose>86.14112402998498 -255.98003306352945 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_96</name>
+      <pose>43.046146989326445 -240.96123784029277 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_97</name>
+      <pose>47.095441257630924 -229.53607519208688 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_98</name>
+      <pose>83.27721057750848 -229.7750453747195 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_99</name>
+      <pose>83.87830907266144 -219.7686302694458 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_100</name>
+      <pose>95.41425760048811 -215.96933840617254 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_101</name>
+      <pose>107.93998695824371 -216.46782899955585 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_102</name>
+      <pose>95.5477220578866 -188.5891995532124 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_103</name>
+      <pose>111.27877504950416 -183.28345761393166 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_104</name>
+      <pose>114.81359504514498 -217.50126177268766 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_105</name>
+      <pose>123.76914677699308 -219.24549077306958 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_106</name>
+      <pose>144.90529054786475 -187.23497616289137 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_107</name>
+      <pose>143.92439547429447 -224.94300896445833 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_108</name>
+      <pose>158.98473853299967 -228.86787169925185 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_109</name>
+      <pose>168.34081920939065 -195.5336173970978 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>oak_tree_110</name>
+      <pose>184.15967035843508 -216.0197025874849 0 0 0 0</pose>
+      <uri>model://oak_tree</uri>
+    </include>
+    <include>
+      <name>pine_tree_111</name>
+      <pose>185.05123171453124 -182.87280114576834 0 0 0 0</pose>
+      <uri>model://pine_tree</uri>
+    </include>
+  </world>
+</sdf>

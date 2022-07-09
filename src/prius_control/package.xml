@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>prius_control</name>
+  <version>0.0.1</version>
+  <description>The prius_control package</description>
+  <author email="amadeuszszymko@gmail.com">Amadeusz Szymko</author>
+  <maintainer email="amadeuszszymko@gmail.com">Amadeusz Szymko</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>prius_msgs</depend>
+  <depend>prius_vision</depend>
+  <depend>sensor_msgs</depend>
+  <depend>message_filters</depend>
+  <depend>image_transport</depend>
+  <depend>cv_bridge</depend>
+  <depend>rqt_plot</depend>
+  <depend>rqt_reconfigure</depend>
+
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+</package>

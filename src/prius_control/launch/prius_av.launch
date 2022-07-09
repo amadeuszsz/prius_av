@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Import gazebo models -->
+    <env name="GAZEBO_MODEL_PATH" value="$(find prius_tools)/models/"/>
+
+    <arg name="model" default="$(find prius_description)/urdf/prius.urdf"/>
+    <arg name="rvizconfig" default="$(find car_demo)/rviz/demo.rviz"/>
+
+    <param name="robot_description" textfile="$(arg model)"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="verbose" value="true"/>
+        <arg name="world_name" value="$(find prius_tools)/worlds/custom.world"/>
+    </include>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+        <!-- <remap from="robot_description" to="different_robot_description" /> -->
+        <!-- <remap from="joint_states" to="/prius/joint_states" /> -->
+    </node>
+
+    <node pkg="fake_localization" type="fake_localization" name="fake_localization">
+        <!-- <remap from="base_pose_ground_truth" to="/prius/base_pose_ground_truth"/> -->
+    </node>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="very_inaccurate_odom" args="0 0 0 0 0 0 odom base_link"/>
+
+    <!-- Run joy node -->
+    <node pkg="joy" type="joy_node" name="joy_node0">
+        <param name="dev" value="/dev/input/js0"/>
+        <param name="autorepeat_rate" value="30.0"/>
+        <param name="default_trig_val" type="bool" value="true"/>
+    </node>
+
+    <!-- Spawn prius vehicle -->
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -x 200.0 -y -200.0 -z 0.5 -Y 0 -model prius"/>
+
+    <!-- Run control node -->
+    <node pkg="prius_control" type="prius_control_node" name="prius_control_node" output="screen"/>
+
+    <!-- Run state node -->
+    <node pkg="prius_control" type="prius_state_node" name="prius_state_node" output="screen"/>
+
+    <!-- Run collector node -->
+    <node pkg="prius_control" type="prius_collector_node" name="prius_collector_node" output="screen"/>
+
+    <!-- Run prediction node -->
+    <node pkg="prius_vision" type="control_prediction" name="prius_control_prediction_node" output="screen"/>
+
+    <!-- Run velocity PID node -->
+    <node pkg="prius_control" type="prius_velocity_pid_node" name="prius_velocity_pid_node" output="screen">
+        <param name="kp" type="double" value="0.4" />
+        <param name="ki" type="double" value="0.0" />
+        <param name="kd" type="double" value="0.0" />
+    </node>
+
+    <!-- Run traffic sign detection node -->
+    <node pkg="prius_vision" type="sign_detection" name="prius_sign_detection_node" output="screen"/>
+
+    <!-- Run traffic sign recognition node -->
+    <node pkg="prius_vision" type="sign_recognition" name="prius_sign_recognition_node" output="screen"/>
+
+    <!-- Run visualizer node -->
+    <node pkg="prius_control" type="prius_visualizer_node" name="prius_visualizer_node" output="screen"/>
+
+    <!-- Run rviz node -->
+    <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true"/>-->
+
+</launch>

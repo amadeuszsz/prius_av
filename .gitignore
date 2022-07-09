@@ -1,0 +1,13 @@
+build
+devel
+logs
+src/external
+compile_commands.json
+.catkin_tools
+.bash_history
+.bash_logout
+.bashrc
+.idea
+.profile
+src/prius_vision/data
+src/prius_vision/models

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+
+
+if [[ -f "/opt/pycharm-professional/bin/pycharm.sh" ]]; then
+    sudo ln -s /opt/pycharm-professional/bin/pycharm.sh /usr/bin/pycharm-professional
+fi
+
+if [[ -f "/opt/clion/bin/clion.sh" ]]; then
+    sudo ln -s /opt/clion/bin/clion.sh /usr/bin/clion
+fi
+
+rosdep update
+
+echo 'Startup completed.'
+exec "$@"

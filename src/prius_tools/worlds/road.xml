@@ -1,0 +1,10 @@
+<road name="road">
+  <width>8.4</width>
+  <material>
+    <script>
+      <uri>model://media/materials/scripts/</uri>
+      <uri>model://media/materials/textures/</uri>
+      <name>AV/Two_Lanes</name>
+    </script>
+  </material>
+</road>

@@ -1,0 +1,370 @@
+#!/usr/bin/env python3
+"""
+Copyright 2020 Amadeusz Szymko <amadeuszszymko@gmail.com>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+An application to draw a route for the Gazebo world. The green point indicates the beginning of the route.
+Start the route towards east direction to keep the traffic signs on the right side of the route.
+Each left mouse click in the interface window generates a waypoint.
+Generate traffic signs positions (right mouse button) outside route loop. Do not close the loop by yourself,
+the program does it automatically. The Gazebo world is generated after the application is closed.
+"""
+
+import os
+import sys
+import logging
+from copy import copy
+import xml.etree.ElementTree as ET
+import cv2
+import numpy as np
+import rospkg
+from scipy.interpolate import LSQUnivariateSpline
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+WINDOW_NAME = "Map Creator"
+WINDOW_SIZE = 1000
+
+
+class MapCreator:
+	"""
+	===========
+	Map Creator
+	===========
+	Instructions:
+	1. LEFT MOUSE BUTTON - add new road knot.
+	2. LEFT MOUSE BUTTON + SHIFT key - add new sign coordinate.
+	3. LEFT MOUSE BUTTON + CTRL key - switch speed limit value.
+	4. R key - reset current lap.
+	5. C key - close loop.
+	6. S key - save lap to custom.world. It will override last custom.world file!
+	7. ESC key - quit.
+	"""
+	def __init__(self, map_size: int, spacing: float):
+		print(self.__doc__)
+		self.shape = (map_size, map_size, 3)
+		self.spacing = spacing
+		self.min_points = 4
+		self.offset_sign = 6.0
+		self.offset_tree = {"min": 8.0, "max": 25.0}
+		self.sign_classes = ["20", "30", "50", "60", "70", "80", "100", "120"]
+		self.init_coords = np.array([[200, 250], [200, 200]])
+		self.worlds_path = os.path.join(rospkg.RosPack().get_path("prius_tools"), "worlds")
+		self._frame = np.zeros(shape=self.shape, dtype=np.uint8)
+		self._clicks_road = np.zeros(shape=(2, 0), dtype=np.int16)
+		self._clicks_sign = np.zeros(shape=(3, 0), dtype=np.int16)
+		self._coords_road = np.zeros(shape=(2, 0), dtype=np.float64)
+		self._poses_sign = np.zeros(shape=(4, 0), dtype=np.float64)
+		self._coords_tree = np.zeros(shape=(2, 0), dtype=np.float64)
+		self.restart()
+
+	@property
+	def frame(self) -> np.ndarray:
+		return self._frame
+
+	@frame.setter
+	def frame(self, array: np.ndarray):
+		if array.shape == self.shape:
+			self._frame = array
+
+	@property
+	def clicks_road(self) -> np.ndarray:
+		return self._clicks_road
+
+	@clicks_road.setter
+	def clicks_road(self, array: np.ndarray):
+		if array.shape[0] == 2 and len(array.shape) == 2:
+			self._clicks_road = array
+
+	@property
+	def coords_road(self) -> np.ndarray:
+		return self._coords_road
+
+	@coords_road.setter
+	def coords_road(self, array: np.ndarray):
+		if array.shape[0] == 2 and len(array.shape) == 2:
+			self._coords_road = array
+
+	@property
+	def clicks_sign(self) -> np.ndarray:
+		return self._clicks_sign
+
+	@clicks_sign.setter
+	def clicks_sign(self, array: np.ndarray):
+		if array.shape[0] == 3 and len(array.shape) == 2:
+			self._clicks_sign = array
+
+	@property
+	def poses_sign(self) -> np.ndarray:
+		return self._poses_sign
+
+	@poses_sign.setter
+	def poses_sign(self, array: np.ndarray):
+		if array.shape[0] == 4 and len(array.shape) == 2:
+			self._poses_sign = array
+
+	@property
+	def coords_tree(self) -> np.ndarray:
+		return self._coords_tree
+
+	@coords_tree.setter
+	def coords_tree(self, array: np.ndarray):
+		if array.shape[0] == 2 and len(array.shape) == 2:
+			self._coords_tree = array
+
+	def mouse_callback(self, event: int, x: int, y: int, flags: int, param: int):
+		"""Gather mouse events."""
+		if event == cv2.EVENT_LBUTTONUP and flags == cv2.EVENT_FLAG_LBUTTON:
+			if self.clicks_road.shape[1] > 0 and self.clicks_road.T[-1, 0] == x and self.clicks_road.T[-1, 1] == y:
+				return
+			if self.clicks_road.shape[1] < self.min_points - 1:
+				cv2.circle(self.frame, (x, y), 2, (255, 255, 255), 2)
+			self.clicks_road = np.append(self.clicks_road, np.array([[x], [y]]), axis=1)
+			self.update_spline()
+			self.find_sign_poses()
+			self.find_trees_coords()
+			logging.info(f"Event: road knot. Total road knots: {self.clicks_road.shape[1]}. Total road coords: {self.coords_road.shape[1]}.")
+
+		if event == cv2.EVENT_LBUTTONUP and flags == (cv2.EVENT_FLAG_LBUTTON + cv2.EVENT_FLAG_SHIFTKEY):
+			self.clicks_sign = np.append(self.clicks_sign, np.array([[x], [y], [float(self.sign_classes[0])]]), axis=1)
+			self.find_sign_poses()
+			logging.info(f"Event: speed limit sign {self.sign_classes[0]}. Total signs: {self.poses_sign.shape[1]}.")
+
+		if event == cv2.EVENT_LBUTTONUP and flags == (cv2.EVENT_FLAG_LBUTTON + cv2.EVENT_FLAG_CTRLKEY):
+			self.sign_classes.append(self.sign_classes.pop(0))
+			logging.info(f"Event: change of speed limit ({self.sign_classes[0]}).")
+
+	def restart(self):
+		"""Clear current map - remove all roads and signs."""
+		self.frame = np.zeros(self.shape, dtype=np.uint8)
+		self.clicks_road = np.zeros(shape=(2, 0), dtype=np.int16)
+		self.coords_road = np.zeros(shape=(2, 0), dtype=np.float64)
+		self.clicks_sign = np.zeros(shape=(3, 0), dtype=np.int16)
+		self.poses_sign = np.zeros(shape=(4, 0), dtype=np.float64)
+		self.coords_tree = np.zeros(shape=(2, 0), dtype=np.float64)
+		for init_coord in self.init_coords.T:
+			self.clicks_road = np.append(self.clicks_road, init_coord[..., np.newaxis], axis=1)
+			cv2.circle(self.frame, (init_coord[0], init_coord[1]), 2, (255, 255, 255), 2)
+		logging.info(f"Map has been cleaned.")
+
+	def close_loop(self):
+		"""Close current spline in order to receive a lap."""
+		if (self.clicks_road[:, 0] == self.clicks_road[:, -1]).all():
+			return
+		self.clicks_road = np.append(self.clicks_road, self.clicks_road[:, 0, np.newaxis], axis=1)
+		self.update_spline()
+		self.find_sign_poses()
+		self.find_trees_coords()
+		logging.info(f"Event: closing loop. Total road knots: {self.clicks_road.shape[1]}. Total road coords: {self.coords_road.shape[1]}.")
+
+	def save_world(self):
+		"""Save current map to .world file."""
+		layout_tree = ET.parse('/home/amadeusz/prius_av/src/prius_tools/worlds/layout_custom.xml')
+		layout_root = layout_tree.getroot()
+
+		road_tree = ET.parse('/home/amadeusz/prius_av/src/prius_tools/worlds/road.xml')
+		road_root = road_tree.getroot()
+
+		# Track
+		for coord_road in self.coords_road.T:
+			point = ET.Element('point')
+			point.text = f"{coord_road[0]} -{coord_road[1]} 0.02"
+			road_root.append(point)
+
+		# Fill a gap on beginning & end track connection
+		point = ET.Element('point')
+		point.text = f"{self.coords_road.T[0, 0] + 1} -{self.coords_road.T[0, 1]} 0.03"
+		road_root.append(point)
+		layout_root.find("world").append(road_root)
+
+		# Signs
+		for key, pose_sign in enumerate(self.poses_sign.T):
+			sign = ET.Element('include')
+
+			name = ET.Element('name')
+			name.text = f"speed_limit_sign_{str(int(pose_sign[3]))}_{key}"
+			pose = ET.Element('pose')
+			pose.text = f"{pose_sign[0]} -{pose_sign[1]} 0 0 0 {pose_sign[2] - np.pi / 2}"
+			uri = ET.Element('uri')
+			uri.text = f"model://speed_limit_sign_{str(int(pose_sign[3]))}"
+
+			sign.append(name)
+			sign.append(pose)
+			sign.append(uri)
+
+			layout_root.find("world").append(sign)
+
+		# Trees
+		for key, coord_tree in enumerate(self.coords_tree.T):
+			tree_class = np.random.choice(a=["oak_tree", "pine_tree"])
+			tree = ET.Element('include')
+
+			name = ET.Element('name')
+			name.text = f"{tree_class}_{key}"
+			pose = ET.Element('pose')
+			pose.text = f"{coord_tree[0]} -{coord_tree[1]} 0 0 0 0"
+			uri = ET.Element('uri')
+			uri.text = f"model://{tree_class}"
+
+			tree.append(name)
+			tree.append(pose)
+			tree.append(uri)
+
+			layout_root.find("world").append(tree)
+
+		self.indent_xml(layout_root)
+		filepath = os.path.join(self.worlds_path, "custom.world")
+		layout_tree.write(filepath)
+		logging.info(f"Gazebo world file has been saved ({filepath}).")
+
+	def update_spline(self):
+		"""Update spline coordinates based on all spline coefficients."""
+		if self.clicks_road.shape[1] < self.min_points:
+			return
+		t = self.generate_linspace()
+		T = np.linspace(0., 1., int(self.get_total_length() / self.spacing))
+		knots = t[2:-2]
+		x_spline = LSQUnivariateSpline(t, self.clicks_road[0], knots)
+		y_spline = LSQUnivariateSpline(t, self.clicks_road[1], knots)
+		self.coords_road = np.column_stack((x_spline(T), y_spline(T))).astype(np.float64).T
+		cv_coords = self.cv_coords(coords=self.coords_road)
+		frame = np.zeros(shape=self.shape, dtype=np.uint8)
+		frame[cv_coords[1], cv_coords[0]] = [255, 255, 255]
+		self.frame = frame
+
+	def find_sign_poses(self):
+		"""Find sign pose based on mouse event and current road coordinates."""
+		if self.clicks_sign.shape[1] < 1:
+			return
+		poses_sign = np.zeros(shape=(4, 0), dtype=np.float64)
+		distances = np.linalg.norm(self.clicks_sign[:2, :][..., np.newaxis] - self.coords_road[:, np.newaxis, :], axis=0)
+		closest_coords_idx = np.unique(np.vstack([np.argmin(distances, axis=1), self.clicks_sign[2].astype(int)]), axis=1)
+		closest_coords_idx = closest_coords_idx.T[np.bitwise_and(closest_coords_idx.T[..., 0] > 0,
+																 closest_coords_idx.T[..., 0] < self.coords_road.shape[1] - 1)].T
+		for idx in closest_coords_idx.T:
+			vec_1 = self.coords_road.T[idx[0] - 1] - self.coords_road.T[idx[0]]
+			vec_2 = self.coords_road.T[(idx[0] + 1) % self.coords_road.shape[1]] - self.coords_road.T[idx[0]]
+			angle_1 = np.arctan2(- vec_1[1], vec_1[0])
+			rot_sign = angle_1  # sign yaw
+			if angle_1 < 0:
+				angle_1 = 2 * np.pi + angle_1
+			angle_2 = np.arctan2(- vec_2[1], vec_2[0])
+			if angle_2 < 0:
+				angle_2 = 2 * np.pi + angle_2
+			cc_angle_diff = np.fabs(angle_2 - angle_1)  # counter-clockwise angle diff
+			cc_angle_mid = angle_1 + cc_angle_diff / 2
+			coord_sign = self.coords_road.T[idx[0]] + np.array([np.cos(cc_angle_mid), - np.sin(cc_angle_mid)]) * self.offset_sign
+			pose_sign = np.hstack([coord_sign, rot_sign, float(idx[1])])
+			poses_sign = np.append(poses_sign, pose_sign[..., np.newaxis], axis=1)
+
+		self.poses_sign = poses_sign
+		cv_coords = self.cv_coords(coords=self.poses_sign)
+		frame = np.zeros(shape=self.shape, dtype=np.uint8)
+		frame[cv_coords[1], cv_coords[0]] = [0, 255, 255]
+		self.frame += frame
+
+	def find_trees_coords(self):
+		"""Find tree pose based on road coordinates."""
+		if self.coords_road.shape[1] < 1:
+			return
+		coords_tree = np.zeros(shape=(2, 0), dtype=np.float64)
+
+		for road_idx in range(1, self.coords_road.shape[1] - 1):
+			vec_1 = self.coords_road.T[road_idx - 1] - self.coords_road.T[road_idx]
+			vec_2 = self.coords_road.T[(road_idx + 1) % self.coords_road.shape[1]] - self.coords_road.T[road_idx]
+			angle_1 = np.arctan2(- vec_1[1], vec_1[0])
+			if angle_1 < 0:
+				angle_1 = 2 * np.pi + angle_1
+			angle_2 = np.arctan2(- vec_2[1], vec_2[0])
+			if angle_2 < 0:
+				angle_2 = 2 * np.pi + angle_2
+			cc_angle_diff = np.fabs(angle_2 - angle_1)  # counter-clockwise angle diff
+			cc_angle_mid = angle_1 + cc_angle_diff / 2
+			offset = self.offset_tree["min"] + np.random.rand() * (self.offset_tree["max"] - self.offset_tree["min"])
+			road_side_factor = np.random.choice(a=[1, -1])
+			coord_tree = self.coords_road.T[road_idx] + np.array([np.cos(cc_angle_mid), - np.sin(cc_angle_mid)]) * offset * road_side_factor
+			coords_tree = np.append(coords_tree, coord_tree[..., np.newaxis], axis=1)
+
+		self.coords_tree = coords_tree
+		cv_coords = self.cv_coords(coords=self.coords_tree)
+		frame = np.zeros(shape=self.shape, dtype=np.uint8)
+		frame[cv_coords[1], cv_coords[0]] = [0, 255, 0]
+		self.frame += frame
+
+	def generate_linspace(self) -> np.ndarray:
+		"""Generate linspace for specific length of road."""
+		if self.clicks_road.shape[1] < 2:
+			return np.array([0.0])
+		total_length = self.get_total_length()
+		curr_value = 0.0
+		linspace = np.zeros(shape=1, dtype=np.float64)
+		for key in range(self.clicks_road.shape[1] - 1):
+			current_length = np.linalg.norm(self.clicks_road[:, key + 1] - self.clicks_road[:, key])
+			curr_value += current_length / total_length
+			linspace = np.append(linspace, curr_value)
+
+		return linspace
+
+	def get_total_length(self) -> float:
+		"""Get total length of road."""
+		if self.clicks_road.shape[1] < 2:
+			return 0.0
+		return float(np.sum(np.linalg.norm(self.clicks_road[:, 1:] - self.clicks_road[:, :-1], axis=0)))
+
+	def cv_coords(self, coords) -> np.array:
+		"""Get road coordinates for visualization purpose. Point out of the visible area have to be removed for CV frame."""
+		cv_coords = copy(coords)
+		outliers = np.where(np.bitwise_or(cv_coords[:2] < 0, cv_coords[:2] > self.shape[0] - 1))
+		cv_coords = np.delete(cv_coords, outliers[1], axis=1)
+		cv_coords = np.round(cv_coords).astype(np.uint16)
+		return cv_coords
+
+	def indent_xml(self, elem, level=0):
+		"""Make .world file prettier."""
+		i = "\n" + level*"  "
+		if len(elem):
+			if not elem.text or not elem.text.strip():
+				elem.text = i + "  "
+			if not elem.tail or not elem.tail.strip():
+				elem.tail = i
+			for elem in elem:
+				self.indent_xml(elem, level+1)
+			if not elem.tail or not elem.tail.strip():
+				elem.tail = i
+		else:
+			if level and (not elem.tail or not elem.tail.strip()):
+				elem.tail = i
+
+
+if __name__ == '__main__':
+	mc = MapCreator(map_size=500, spacing=10.0)
+	cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_KEEPRATIO)
+	cv2.resizeWindow(WINDOW_NAME, WINDOW_SIZE, WINDOW_SIZE)
+	cv2.setMouseCallback(WINDOW_NAME, mc.mouse_callback)
+
+	while True:
+		cv2.imshow('Map Creator', mc.frame)
+		k = cv2.waitKey(1)
+
+		if k == ord('r'):
+			mc.restart()
+
+		if k == ord('c'):
+			mc.close_loop()
+
+		if k == ord('s'):
+			mc.save_world()
+
+		if k == 27:
+			cv2.destroyAllWindows()
+			break

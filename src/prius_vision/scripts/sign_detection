@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""
+Copyright 2020 Amadeusz Szymko <amadeusz.szymko@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
+import os
+import rospy
+import rospkg
+import numpy as np
+from prius_msgs.msg import Sign, Control
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+import tensorflow as tf
+from yolov3_tf2.models import YoloV3Tiny
+from yolov3_tf2.dataset import transform_images
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+physical_devices = tf.config.list_physical_devices("GPU")
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# gpus = tf.config.list_physical_devices('GPU')
+# if gpus:
+#     try:
+#         tf.config.set_logical_device_configuration(
+#             gpus[0],
+#             [tf.config.LogicalDeviceConfiguration(memory_limit=1024)])
+#         logical_gpus = tf.config.list_logical_devices('GPU')
+#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#     except RuntimeError as e:
+#         print(e)
+
+
+class SignDetection:
+    def __init__(self):
+        self.yolo = self.get_model()
+        self.detection_threshold = 0.8
+        self.bridge = CvBridge()
+        self.image_sub = rospy.Subscriber("/prius/front_camera/image_raw", Image, self.image_callback)
+        self.prius_mode_sub = rospy.Subscriber("/prius", Control, self.control_callback)
+        self.prius_sign_pub = rospy.Publisher("/prius/sign", Sign, queue_size=1)
+        self.prius_sign_preview_pub = rospy.Publisher("/prius/sign/image_raw", Image, queue_size=1)
+        self.drive = Control.STATE_DRIVING_MANUAL
+
+
+    @staticmethod
+    def get_model():
+        """
+        Get path of model directory.
+        :return: path of model directory
+        :rtype: tf.model
+        """
+        rospack = rospkg.RosPack()
+        path = rospack.get_path("prius_vision") + "/models/signs_detection/yolov3_train_13.tf"
+        yolo = YoloV3Tiny(classes=1)
+        yolo.load_weights(path).expect_partial()
+
+        return yolo
+
+    def control_callback(self, msg):
+        """
+        Get and set driving mode.
+        :param msg: driving and collecting mode
+        :type msg: prius_msgs/Control.msg
+        """
+        self.drive = msg.mode_driving
+
+    def image_callback(self, msg):
+        """
+        Image preprocessing and call prediction function
+        :param msg: front camera image
+        :type msg: sensor_msgs/Image.msg
+        """
+        if self.drive == Control.STATE_DRIVING_AUTO:
+            try:
+                cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+                # Select Region of Interest
+                cv_image_roi = cv_image[131:547, 384:]
+
+                img = tf.expand_dims(cv_image_roi, 0)
+                img = transform_images(img, 416)
+
+                boxes, scores, classes, nums = self.yolo(img)
+
+                best_score, idx = np.max(scores[0]), np.argmax(scores[0])
+                if best_score >= self.detection_threshold:
+                    sign = Sign()
+                    sign.header = msg.header
+                    sign.left = int(boxes[0, idx, 0] * 416) + 384
+                    sign.top = int(boxes[0, idx, 1] * 416) + 131
+                    sign.right = int(boxes[0, idx, 2] * 416) + 384
+                    sign.bottom = int(boxes[0, idx, 3] * 416) + 131
+                    self.prius_sign_pub.publish(sign)
+                    cv_image_preview = cv_image[sign.top:sign.bottom,
+                                                sign.left:sign.right]
+                    cv_image_preview_msg = self.bridge.cv2_to_imgmsg(cv_image_preview, "bgr8")
+                    cv_image_preview_msg.header = msg.header
+                    self.prius_sign_preview_pub.publish(cv_image_preview_msg)
+
+            except CvBridgeError as e:
+                print(e)
+
+
+if __name__ == '__main__':
+    rospy.init_node('sign_detection_node')
+    sd = SignDetection()
+    rospy.spin()
